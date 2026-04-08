@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>百家乐模拟器 - Baccarat Simulator</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi55m+5a625LmQ5qih5ouf5ZmoIiwic2hvcnRfbmFtZSI6IueZvuWutuS5kCIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBkNGEyZSIsInRoZW1lX2NvbG9yIjoiIzBkNGEyZSJ9">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --felt:#0d4a2e;--felt-light:#1a6b3c;--gold:#d4af37;--gold-dim:rgba(212,175,55,0.5);
+  --red:#e74c3c;--blue:#4fc3f7;--green:#2ecc71;--dark:#0a0a0a;--text:#e8d5a3;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+/* Top Bar */
+.top-bar{background:linear-gradient(180deg,#1a1a1a,#111);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold-dim);position:sticky;top:0;z-index:100}
+.top-bar .balance{font-size:18px;color:var(--gold);font-weight:bold}
+.top-bar .balance span{font-size:13px;color:var(--text);opacity:0.7;margin-right:4px}
+.table-tabs{display:flex;gap:4px}
+.table-tabs button{background:rgba(255,255,255,0.05);border:1px solid var(--gold-dim);color:var(--text);padding:4px 14px;border-radius:4px;cursor:pointer;font-size:13px;transition:all 0.2s}
+.table-tabs button.active{background:rgba(212,175,55,0.15);color:var(--gold);border-color:var(--gold)}
+.table-tabs button:hover{background:rgba(212,175,55,0.1)}
+/* Main Layout */
+.main{display:flex;gap:12px;padding:12px;max-width:1200px;margin:0 auto}
+.left-panel{flex:1;min-width:0}
+.right-panel{width:420px;flex-shrink:0}
+/* Cards Area */
+.cards-area{background:linear-gradient(135deg,var(--felt),var(--felt-light),var(--felt));border:2px solid var(--gold-dim);border-radius:12px;padding:16px;position:relative;overflow:hidden;margin-bottom:12px}
+.cards-area::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(255,255,255,0.015) 2px,rgba(255,255,255,0.015) 4px);pointer-events:none}
+.cards-area-inner{position:relative;z-index:1}
+.cards-header{text-align:center;font-family:serif;font-size:20px;color:var(--gold);letter-spacing:6px;margin-bottom:12px;text-shadow:0 2px 4px rgba(0,0,0,0.5)}
+.hands{display:flex;justify-content:space-around;gap:20px}
+.hand{text-align:center;flex:1}
+.hand-label{font-size:14px;margin-bottom:8px;letter-spacing:2px}
+.hand-label.player{color:var(--blue)}
+.hand-label.banker{color:var(--red)}
+.hand-cards{display:flex;justify-content:center;gap:6px;min-height:80px;align-items:center}
+.card{width:52px;height:72px;background:white;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);position:relative}
+.card.red{color:#c0392b}
+.card.black{color:#1a1a1a}
+.card .suit{font-size:14px}
+.card .rank{font-size:16px;font-weight:bold}
+.card.empty{background:rgba(255,255,255,0.08);border:1px dashed var(--gold-dim);box-shadow:none}
+.hand-total{font-size:28px;font-weight:bold;margin-top:8px}
+.hand-total.player{color:var(--blue)}
+.hand-total.banker{color:var(--red)}
+.result-banner{text-align:center;font-size:18px;font-weight:bold;padding:8px;margin-top:8px;border-radius:6px;letter-spacing:2px;display:none}
+.result-banner.show{display:block}
+.result-banner.player-win{background:rgba(79,195,247,0.15);color:var(--blue);border:1px solid rgba(79,195,247,0.3)}
+.result-banner.banker-win{background:rgba(231,76,60,0.15);color:var(--red);border:1px solid rgba(231,76,60,0.3)}
+.result-banner.tie-win{background:rgba(46,204,113,0.15);color:var(--green);border:1px solid rgba(46,204,113,0.3)}
+.pnl{font-size:14px;margin-top:4px;font-weight:bold}
+.pnl.pos{color:var(--green)}
+.pnl.neg{color:var(--red)}
+/* Betting Area */
+.betting-area{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.bet-zone{border:2px solid var(--gold-dim);border-radius:8px;padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.2s;min-width:80px;flex:1;max-width:140px;background:rgba(0,0,0,0.2);position:relative}
+.bet-zone:hover{background:rgba(212,175,55,0.08);border-color:var(--gold)}
+.bet-zone.has-bet{border-color:var(--gold);background:rgba(212,175,55,0.1)}
+.bet-zone .label{font-size:15px;font-weight:bold;margin-bottom:2px}
+.bet-zone .label.p-label{color:var(--blue)}
+.bet-zone .label.b-label{color:var(--red)}
+.bet-zone .label.t-label{color:var(--green)}
+.bet-zone .odds{font-size:11px;opacity:0.6}
+.bet-zone .bet-amount{font-size:13px;color:var(--gold);margin-top:4px;font-weight:bold}
+/* Chips */
+.chips-bar{display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.chip{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:white;cursor:pointer;border:3px dashed rgba(255,255,255,0.3);transition:all 0.2s;user-select:none}
+.chip:hover{transform:scale(1.1)}
+.chip.selected{transform:scale(1.15);box-shadow:0 0 12px rgba(212,175,55,0.6);border-color:var(--gold)}
+.chip-10{background:radial-gradient(circle,#27ae60,#1e8449)}
+.chip-50{background:radial-gradient(circle,#2980b9,#1a5276)}
+.chip-100{background:radial-gradient(circle,#c0392b,#96281b)}
+.chip-500{background:radial-gradient(circle,#8e44ad,#6c3483)}
+.chip-1000{background:radial-gradient(circle,#d4af37,#b8860b);color:#1a1a1a}
+/* Action Buttons */
+.actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.actions button{padding:10px 20px;border:1px solid var(--gold-dim);border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold;transition:all 0.2s}
+.btn-deal{background:linear-gradient(135deg,#d4af37,#b8860b);color:#1a1a1a;border-color:var(--gold)}
+.btn-deal:hover{background:linear-gradient(135deg,#e8c547,#d4af37)}
+.btn-deal:disabled{opacity:0.4;cursor:not-allowed}
+.btn-clear{background:rgba(255,255,255,0.05);color:var(--text)}
+.btn-clear:hover{background:rgba(255,255,255,0.1)}
+.btn-repeat{background:rgba(255,255,255,0.05);color:var(--text)}
+.btn-repeat:hover{background:rgba(255,255,255,0.1)}
+.btn-reset{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.3)}
+.btn-reset:hover{background:rgba(231,76,60,0.2)}
+/* Road Maps */
+.roadmaps{background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.2);border-radius:8px;padding:8px;overflow:hidden}
+.roadmap-section{margin-bottom:8px}
+.roadmap-section:last-child{margin-bottom:0}
+.roadmap-title{font-size:11px;color:var(--gold);opacity:0.7;margin-bottom:4px;letter-spacing:1px}
+.roadmap-canvas{background:rgba(0,0,0,0.2);border-radius:4px;display:block;width:100%}
+.road-row{display:flex;gap:2px}
+.derived-roads{display:flex;gap:8px}
+.derived-roads .roadmap-section{flex:1;min-width:0}
+/* Stats Panel */
+.stats-panel{background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.2);border-radius:8px;padding:12px;margin-top:12px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-item{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.stat-item .stat-label{opacity:0.7}
+.stat-item .stat-value{font-weight:bold}
+.stat-value.pos{color:var(--green)}
+.stat-value.neg{color:var(--red)}
+/* Mobile */
+.mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid var(--gold-dim);z-index:100}
+.mobile-tabs button{flex:1;padding:12px;background:none;border:none;color:var(--text);font-size:13px;cursor:pointer}
+.mobile-tabs button.active{color:var(--gold);border-top:2px solid var(--gold)}
+@media(max-width:768px){
+  .main{flex-direction:column;padding:8px}
+  .right-panel{width:100%}
+  .mobile-tabs{display:flex}
+  .right-panel.hidden{display:none}
+  .left-panel.hidden{display:none}
+  .stats-panel.mobile-hidden{display:none}
+  body{padding-bottom:50px}
+  .chip{width:40px;height:40px;font-size:11px}
+  .card{width:44px;height:60px;font-size:15px}
+  .card .suit{font-size:12px}
+  .card .rank{font-size:14px}
+  .bet-zone{min-width:60px;padding:8px 4px}
+}
+/* Confirm Dialog */
+.dialog-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center}
+.dialog-overlay.show{display:flex}
+.dialog{background:#1a1a1a;border:1px solid var(--gold-dim);border-radius:12px;padding:24px;max-width:320px;text-align:center}
+.dialog h3{color:var(--gold);margin-bottom:12px}
+.dialog p{margin-bottom:16px;font-size:14px}
+.dialog .dialog-btns{display:flex;gap:8px;justify-content:center}
+.dialog .dialog-btns button{padding:8px 20px;border-radius:6px;cursor:pointer;border:1px solid var(--gold-dim);font-size:13px}
+.dialog .btn-confirm{background:var(--red);color:white;border-color:var(--red)}
+.dialog .btn-cancel{background:rgba(255,255,255,0.05);color:var(--text)}
+/* Fullscreen road */
+.fullscreen-road{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:150;display:none;flex-direction:column;padding:16px}
+.fullscreen-road.show{display:flex}
+.fullscreen-road .close-btn{align-self:flex-end;background:none;border:1px solid var(--gold-dim);color:var(--text);padding:6px 16px;border-radius:4px;cursor:pointer;margin-bottom:8px}
+.fullscreen-road canvas{flex:1;width:100%}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar">
+  <div class="balance"><span>余额</span>¥<span id="balanceDisplay">10,000</span></div>
+  <div class="table-tabs" id="tableTabs"></div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="left-panel" id="leftPanel">
+    <!-- Cards Area -->
+    <div class="cards-area">
+      <div class="cards-area-inner">
+        <div class="cards-header">BACCARAT</div>
+        <div class="hands">
+          <div class="hand">
+            <div class="hand-label player">闲 PLAYER</div>
+            <div class="hand-cards" id="playerCards"></div>
+            <div class="hand-total player" id="playerTotal">-</div>
+          </div>
+          <div class="hand">
+            <div class="hand-label banker">庄 BANKER</div>
+            <div class="hand-cards" id="bankerCards"></div>
+            <div class="hand-total banker" id="bankerTotal">-</div>
+          </div>
+        </div>
+        <div class="result-banner" id="resultBanner"></div>
+        <div class="pnl" id="pnlDisplay"></div>
+      </div>
+    </div>
+
+    <!-- Betting Area -->
+    <div class="betting-area" id="bettingArea">
+      <div class="bet-zone" data-bet="playerPair" onclick="placeBet('playerPair')">
+        <div class="label p-label">闲对</div>
+        <div class="odds">11:1</div>
+        <div class="bet-amount" id="bet-playerPair"></div>
+      </div>
+      <div class="bet-zone" data-bet="player" onclick="placeBet('player')">
+        <div class="label p-label">闲 Player</div>
+        <div class="odds">1:1</div>
+        <div class="bet-amount" id="bet-player"></div>
+      </div>
+      <div class="bet-zone" data-bet="tie" onclick="placeBet('tie')">
+        <div class="label t-label">和 Tie</div>
+        <div class="odds">8:1</div>
+        <div class="bet-amount" id="bet-tie"></div>
+      </div>
+      <div class="bet-zone" data-bet="banker" onclick="placeBet('banker')">
+        <div class="label b-label">庄 Banker</div>
+        <div class="odds">1:1 (-5%)</div>
+        <div class="bet-amount" id="bet-banker"></div>
+      </div>
+      <div class="bet-zone" data-bet="bankerPair" onclick="placeBet('bankerPair')">
+        <div class="label b-label">庄对</div>
+        <div class="odds">11:1</div>
+        <div class="bet-amount" id="bet-bankerPair"></div>
+      </div>
+    </div>
+
+    <!-- Chips -->
+    <div class="chips-bar">
+      <div class="chip chip-10 selected" data-value="10" onclick="selectChip(this)">10</div>
+      <div class="chip chip-50" data-value="50" onclick="selectChip(this)">50</div>
+      <div class="chip chip-100" data-value="100" onclick="selectChip(this)">100</div>
+      <div class="chip chip-500" data-value="500" onclick="selectChip(this)">500</div>
+      <div class="chip chip-1000" data-value="1000" onclick="selectChip(this)">1K</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn-deal" id="btnDeal" onclick="deal()">发牌 Deal</button>
+      <button class="btn-repeat" onclick="repeatBet()">重复上局</button>
+      <button class="btn-clear" onclick="clearBets()">清除下注</button>
+      <button class="btn-reset" onclick="showResetDialog()">重置</button>
+    </div>
+
+    <!-- Stats (desktop) -->
+    <div class="stats-panel" id="statsPanel">
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Road Maps -->
+  <div class="right-panel" id="rightPanel">
+    <div class="roadmaps">
+      <div class="roadmap-section">
+        <div class="roadmap-title">大路 Big Road</div>
+        <canvas class="roadmap-canvas" id="bigRoadCanvas" height="130"></canvas>
+      </div>
+      <div class="derived-roads">
+        <div class="roadmap-section">
+          <div class="roadmap-title">大眼仔 Big Eye Boy</div>
+          <canvas class="roadmap-canvas" id="bigEyeCanvas" height="70"></canvas>
+        </div>
+        <div class="roadmap-section">
+          <div class="roadmap-title">小路 Small Road</div>
+          <canvas class="roadmap-canvas" id="smallRoadCanvas" height="70"></canvas>
+        </div>
+        <div class="roadmap-section">
+          <div class="roadmap-title">蟑螂路 Cockroach Pig</div>
+          <canvas class="roadmap-canvas" id="cockroachCanvas" height="70"></canvas>
+        </div>
+      </div>
+      <div class="roadmap-section" style="margin-top:8px">
+        <div class="roadmap-title">珠盘路 Bead Plate</div>
+        <canvas class="roadmap-canvas" id="beadCanvas" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Tabs -->
+<div class="mobile-tabs" id="mobileTabs">
+  <button class="active" onclick="switchMobileTab('game',this)">游戏</button>
+  <button onclick="switchMobileTab('roads',this)">路单</button>
+  <button onclick="switchMobileTab('stats',this)">统计</button>
+</div>
+
+<!-- Reset Dialog -->
+<div class="dialog-overlay" id="resetDialog">
+  <div class="dialog">
+    <h3>确认重置</h3>
+    <p id="resetMsg">确定要重置当前桌吗？所有数据将被清除。</p>
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="hideResetDialog()">取消</button>
+      <button class="btn-confirm" id="btnResetConfirm" onclick="resetTable()">重置当前桌</button>
+      <button class="btn-confirm" onclick="resetAll()">重置全部</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONSTANTS ============
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RANK_VALUES = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':0,J:0,Q:0,K:0};
+const INITIAL_BALANCE = 10000;
+const MAX_TABLES = 3;
+const MAX_HISTORY = 500;
+const CELL = 20; // road cell size desktop
+const CELL_M = 14; // mobile
+const ROAD_ROWS = 6;
+
+// ============ STATE ============
+let tables = [];
+let currentTableIdx = 0;
+let selectedChip = 10;
+let currentBets = {player:0,banker:0,tie:0,playerPair:0,bankerPair:0};
+let lastBets = null;
+let gamePhase = 'betting'; // 'betting' | 'result'
+
+function getTable() { return tables[currentTableIdx]; }
+
+// ============ SHOE / DECK ============
+function createShoe() {
+  const shoe = [];
+  for (let d = 0; d < 8; d++)
+    for (const s of SUITS)
+      for (const r of RANKS)
+        shoe.push({suit: s, rank: r, value: RANK_VALUES[r]});
+  // Fisher-Yates
+  for (let i = shoe.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shoe[i], shoe[j]] = [shoe[j], shoe[i]];
+  }
+  return shoe;
+}
+
+function drawCard(table) {
+  if (table.shoe.length < 6) table.shoe = createShoe();
+  return table.shoe.pop();
+}
+
+function handTotal(cards) {
+  return cards.reduce((s, c) => s + c.value, 0) % 10;
+}
+
+// ============ BACCARAT RULES ============
+function playRound(table) {
+  const p = [drawCard(table), drawCard(table)];
+  const b = [drawCard(table), drawCard(table)];
+  let pTotal = handTotal(p);
+  let bTotal = handTotal(b);
+
+  let pThird = null, bThird = null;
+
+  // Natural
+  if (pTotal >= 8 || bTotal >= 8) {
+    // no draw
+  } else {
+    // Player draw
+    if (pTotal <= 5) {
+      pThird = drawCard(table);
+      p.push(pThird);
+      pTotal = handTotal(p);
+
+      // Banker draw based on player's third card
+      const p3v = pThird.value;
+      if (bTotal <= 2) {
+        bThird = drawCard(table); b.push(bThird);
+      } else if (bTotal === 3 && p3v !== 8) {
+        bThird = drawCard(table); b.push(bThird);
+      } else if (bTotal === 4 && p3v >= 2 && p3v <= 7) {
+        bThird = drawCard(table); b.push(bThird);
+      } else if (bTotal === 5 && p3v >= 4 && p3v <= 7) {
+        bThird = drawCard(table); b.push(bThird);
+      } else if (bTotal === 6 && (p3v === 6 || p3v === 7)) {
+        bThird = drawCard(table); b.push(bThird);
+      }
+    } else {
+      // Player stands, banker draws on 0-5
+      if (bTotal <= 5) {
+        bThird = drawCard(table); b.push(bThird);
+      }
+    }
+  }
+
+  bTotal = handTotal(b);
+  pTotal = handTotal(p);
+
+  const winner = pTotal > bTotal ? 'player' : bTotal > pTotal ? 'banker' : 'tie';
+  const playerPair = p[0].rank === p[1].rank;
+  const bankerPair = b[0].rank === b[1].rank;
+
+  return {
+    round: table.history.length + 1,
+    player: p, banker: b,
+    playerTotal: pTotal, bankerTotal: bTotal,
+    winner, playerPair, bankerPair
+  };
+}
+
+// ============ SETTLEMENT ============
+function settle(result) {
+  const t = getTable();
+  const bets = {...currentBets};
+  let totalReturn = 0;
+  if (result.winner === 'player') {
+    totalReturn += bets.player * 2; // 1:1 + stake
+    totalReturn += bets.tie * 0;
+    totalReturn += bets.banker * 0;
+  } else if (result.winner === 'banker') {
+    totalReturn += bets.banker + bets.banker * 0.95; // stake + 95% win
+    totalReturn += bets.tie * 0;
+    totalReturn += bets.player * 0;
+  } else { // tie
+    totalReturn += bets.player; // push
+    totalReturn += bets.banker; // push
+    totalReturn += bets.tie * 9; // 8:1 + stake
+  }
+
+  // Pairs
+  if (result.playerPair) totalReturn += bets.playerPair * 12; // 11:1 + stake
+  if (result.bankerPair) totalReturn += bets.bankerPair * 12;
+
+  const totalBet = bets.player + bets.banker + bets.tie + bets.playerPair + bets.bankerPair;
+  pnl = totalReturn - totalBet;
+  t.balance += totalReturn;
+
+  return {pnl, totalBet, totalReturn};
+}
+
+// ============ UI: CARDS ============
+function isRed(suit) { return suit === '♥' || suit === '♦'; }
+
+function renderCard(card) {
+  const cls = isRed(card.suit) ? 'red' : 'black';
+  return `<div class="card ${cls}"><span class="rank">${card.rank}</span><span class="suit">${card.suit}</span></div>`;
+}
+
+function renderEmptyCard() {
+  return '<div class="card empty"></div>';
+}
+
+function renderHand(cards, elId) {
+  const el = document.getElementById(elId);
+  let html = '';
+  for (let i = 0; i < 3; i++) {
+    html += cards[i] ? renderCard(cards[i]) : (i < 2 ? renderEmptyCard() : '');
+  }
+  el.innerHTML = html;
+}
+
+function renderResult(result) {
+  renderHand(result.player, 'playerCards');
+  renderHand(result.banker, 'bankerCards');
+  document.getElementById('playerTotal').textContent = result.playerTotal;
+  document.getElementById('bankerTotal').textContent = result.bankerTotal;
+
+  const banner = document.getElementById('resultBanner');
+  banner.className = 'result-banner show';
+  if (result.winner === 'player') {
+    banner.className += ' player-win';
+    banner.textContent = '闲赢 PLAYER WINS';
+  } else if (result.winner === 'banker') {
+    banner.className += ' banker-win';
+    banner.textContent = '庄赢 BANKER WINS';
+  } else {
+    banner.className += ' tie-win';
+    banner.textContent = '和局 TIE';
+  }
+
+  let extra = '';
+  if (result.playerPair) extra += ' 闲对!';
+  if (result.bankerPair) extra += ' 庄对!';
+  if (extra) banner.textContent += extra;
+}
+
+function clearCards() {
+  document.getElementById('playerCards').innerHTML = renderEmptyCard() + renderEmptyCard();
+  document.getElementById('bankerCards').innerHTML = renderEmptyCard() + renderEmptyCard();
+  document.getElementById('playerTotal').textContent = '-';
+  document.getElementById('bankerTotal').textContent = '-';
+  document.getElementById('resultBanner').className = 'result-banner';
+  document.getElementById('pnlDisplay').textContent = '';
+}
+
+// ============ UI: BETS ============
+function selectChip(el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedChip = parseInt(el.dataset.value);
+}
+
+function placeBet(zone) {
+  if (gamePhase !== 'betting') return;
+  const t = getTable();
+  if (t.balance < selectedChip) return;
+  currentBets[zone] += selectedChip;
+  t.balance -= selectedChip;
+  updateBetDisplay();
+  updateBalance();
+}
+
+function clearBets() {
+  if (gamePhase !== 'betting') return;
+  const t = getTable();
+  const total = Object.values(currentBets).reduce((a,b) => a+b, 0);
+  t.balance += total;
+  currentBets = {player:0,banker:0,tie:0,playerPair:0,bankerPair:0};
+  updateBetDisplay();
+  updateBalance();
+}
+
+function repeatBet() {
+  if (gamePhase !== 'betting' || !lastBets) return;
+  clearBets();
+  const t = getTable();
+  const total = Object.values(lastBets).reduce((a,b) => a+b, 0);
+  if (t.balance < total) return;
+  currentBets = {...lastBets};
+  t.balance -= total;
+  updateBetDisplay();
+  updateBalance();
+}
+
+function updateBetDisplay() {
+  for (const zone of ['player','banker','tie','playerPair','bankerPair']) {
+    const el = document.getElementById('bet-' + zone);
+    const zoneEl = el.closest('.bet-zone');
+    if (currentBets[zone] > 0) {
+      el.textContent = '¥' + currentBets[zone].toLocaleString();
+      zoneEl.classList.add('has-bet');
+    } else {
+      el.textContent = '';
+      zoneEl.classList.remove('has-bet');
+    }
+  }
+  // Enable/disable deal button
+  const totalBet = Object.values(currentBets).reduce((a,b) => a+b, 0);
+  document.getElementById('btnDeal').disabled = totalBet === 0;
+}
+
+function updateBalance() {
+  document.getElementById('balanceDisplay').textContent = getTable().balance.toLocaleString();
+}
+
+// ============ DEAL ============
+function deal() {
+  const totalBet = Object.values(currentBets).reduce((a,b) => a+b, 0);
+  if (totalBet === 0) return;
+
+  const t = getTable();
+  gamePhase = 'result';
+
+  const result = playRound(t);
+  const settlement = settle(result);
+
+  // Show result
+  renderResult(result);
+
+  // Show PnL
+  const pnlEl = document.getElementById('pnlDisplay');
+  if (settlement.pnl > 0) {
+    pnlEl.textContent = '+¥' + settlement.pnl.toLocaleString();
+    pnlEl.className = 'pnl pos';
+  } else if (settlement.pnl < 0) {
+    pnlEl.textContent = '-¥' + Math.abs(settlement.pnl).toLocaleString();
+    pnlEl.className = 'pnl neg';
+  } else {
+    pnlEl.textContent = '¥0';
+    pnlEl.className = 'pnl';
+  }
+
+  // Update stats
+  t.stats.totalRounds++;
+  if (result.winner === 'player') t.stats.playerWins++;
+  else if (result.winner === 'banker') t.stats.bankerWins++;
+  else t.stats.tieWins++;
+  if (result.playerPair) t.stats.playerPairs++;
+  if (result.bankerPair) t.stats.bankerPairs++;
+
+  // Streaks (ties don't affect streaks)
+  if (result.winner !== 'tie') {
+    if (result.winner === t.stats.lastWinner) {
+      t.stats.currentStreak++;
+    } else {
+      t.stats.currentStreak = 1;
+      t.stats.lastWinner = result.winner;
+    }
+    if (result.winner === 'player') t.stats.maxPlayerStreak = Math.max(t.stats.maxPlayerStreak, t.stats.currentStreak);
+    if (result.winner === 'banker') t.stats.maxBankerStreak = Math.max(t.stats.maxBankerStreak, t.stats.currentStreak);
+  }
+
+  // PnL tracking
+  const startBalance = INITIAL_BALANCE;
+  const currentPnl = t.balance - startBalance;
+  t.stats.maxProfit = Math.max(t.stats.maxProfit, currentPnl);
+  t.stats.maxLoss = Math.min(t.stats.maxLoss, currentPnl);
+
+  // Save to history
+  t.history.push(result);
+  if (t.history.length > MAX_HISTORY) t.history.shift();
+
+  // Build big road
+  buildBigRoad(t);
+
+  lastBets = {...currentBets};
+  currentBets = {player:0,banker:0,tie:0,playerPair:0,bankerPair:0};
+
+  updateBalance();
+  updateBetDisplay();
+  renderAllRoads();
+  renderStats();
+  saveState();
+
+  // Auto advance after brief pause
+  setTimeout(() => {
+    gamePhase = 'betting';
+    clearCards();
+  }, 1500);
+}
+
+// ============ BIG ROAD ============
+function buildBigRoad(table) {
+  const results = table.history.filter(r => r.winner !== 'tie');
+  const tieMap = {};
+  // Track ties per position
+  table.history.forEach((r, i) => {
+    if (r.winner === 'tie') {
+      // Attach tie to last non-tie result
+      const lastNonTie = table.history.slice(0, i).reverse().find(x => x.winner !== 'tie');
+      if (lastNonTie) {
+        if (!tieMap[lastNonTie.round]) tieMap[lastNonTie.round] = 0;
+        tieMap[lastNonTie.round]++;
+      }
+    }
+  });
+
+  const columns = [];
+  let currentCol = [];
+  let lastWinner = null;
+
+  for (const r of results) {
+    if (r.winner !== lastWinner) {
+      if (currentCol.length > 0) columns.push(currentCol);
+      currentCol = [];
+      lastWinner = r.winner;
+    }
+    currentCol.push({winner: r.winner, round: r.round, ties: tieMap[r.round] || 0, playerPair: r.playerPair, bankerPair: r.bankerPair});
+  }
+  if (currentCol.length > 0) columns.push(currentCol);
+
+  table.bigRoad = columns;
+}
+
+// ============ DERIVED ROADS ============
+function getDerivedRoadData(bigRoad, skipCols) {
+  // skipCols: 1 for big eye, 2 for small road, 3 for cockroach
+  const grid = bigRoadToGrid(bigRoad);
+  const data = [];
+
+  // Flatten big road columns to get entry order with column info
+  const entries = [];
+  for (let c = 0; c < bigRoad.length; c++) {
+    for (let r = 0; r < bigRoad[c].length; r++) {
+      entries.push({col: c, row: r});
+    }
+  }
+
+  // Start conditions
+  // For big eye: start at col 1 row 1, or col 2 row 0
+  // For small road: start at col 2 row 1, or col 3 row 0
+  // For cockroach: start at col 3 row 1, or col 4 row 0
+  const startCol = skipCols;
+  let started = false;
+
+  for (const entry of entries) {
+    const c = entry.col;
+    const r = entry.row;
+
+    if (!started) {
+      if ((c === startCol && r >= 1) || (c > startCol)) {
+        started = true;
+      }
+      if (!started) continue;
+    }
+
+    // Compare logic
+    let isRed;
+    const compareCol = c - skipCols;
+
+    if (r === 0) {
+      // First row: check if previous column and compare column have same length
+      const prevColLen = getColLength(bigRoad, c - 1);
+      const compColLen = getColLength(bigRoad, compareCol);
+      isRed = prevColLen === compColLen; // "齐整"
+    } else {
+      // Not first row: check if there's an entry at [compareCol][r]
+      const hasEntry = compareCol >= 0 && compareCol < bigRoad.length && r < bigRoad[compareCol].length;
+      const hasPrev = (compareCol >= 0 && compareCol < bigRoad.length && (r - 1) < bigRoad[compareCol].length);
+      // Check if the compare column has an entry at this row
+      if (r === 1 && c === startCol) {
+        // Special first entry
+        const prevColLen = getColLength(bigRoad, c - 1);
+        const compColLen = getColLength(bigRoad, compareCol);
+        isRed = prevColLen === compColLen;
+      } else {
+        isRed = hasEntry;
+      }
+    }
+
+    data.push(isRed);
+  }
+
+  return data;
+}
+
+function getColLength(bigRoad, colIdx) {
+  if (colIdx < 0 || colIdx >= bigRoad.length) return 0;
+  return bigRoad[colIdx].length;
+}
+
+function bigRoadToGrid(bigRoad) {
+  const grid = [];
+  for (let c = 0; c < bigRoad.length; c++) {
+    grid[c] = [];
+    for (let r = 0; r < bigRoad[c].length; r++) {
+      grid[c][r] = bigRoad[c][r];
+    }
+  }
+  return grid;
+}
+
+// ============ RENDERING ROADS ============
+function getCellSize() {
+  return window.innerWidth <= 768 ? CELL_M : CELL;
+}
+
+function renderBigRoad() {
+  const t = getTable();
+  const canvas = document.getElementById('bigRoadCanvas');
+  const ctx = canvas.getContext('2d');
+  const cell = getCellSize();
+  const cols = Math.max(40, (t.bigRoad || []).length + 5);
+
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = cell * ROAD_ROWS + 2;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(212,175,55,0.1)';
+  ctx.lineWidth = 0.5;
+  const visibleCols = Math.floor(canvas.width / cell);
+  for (let r = 0; r <= ROAD_ROWS; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * cell); ctx.lineTo(canvas.width, r * cell); ctx.stroke();
+  }
+  for (let c = 0; c <= visibleCols; c++) {
+    ctx.beginPath(); ctx.moveTo(c * cell, 0); ctx.lineTo(c * cell, ROAD_ROWS * cell); ctx.stroke();
+  }
+
+  if (!t.bigRoad || t.bigRoad.length === 0) return;
+
+  // Calculate scroll offset
+  const totalCols = t.bigRoad.length;
+  const scrollOffset = Math.max(0, totalCols - visibleCols + 2);
+
+  // Draw entries with dragon tail
+  const grid = []; // [col][row] tracking occupied positions
+  let drawCol = 0;
+
+  for (let c = 0; c < t.bigRoad.length; c++) {
+    let row = 0;
+    for (let r = 0; r < t.bigRoad[c].length; r++) {
+      // Dragon tail: if row >= ROAD_ROWS, go right
+      let actualCol = drawCol;
+      let actualRow = row;
+      if (row >= ROAD_ROWS) {
+        actualRow = ROAD_ROWS - 1;
+        actualCol = drawCol + (row - ROAD_ROWS + 1);
+      }
+
+      const x = (actualCol - scrollOffset) * cell;
+      const y = actualRow * cell;
+      const entry = t.bigRoad[c][r];
+
+      if (x >= -cell && x < canvas.width) {
+        const color = entry.winner === 'banker' ? '#e74c3c' : '#4fc3f7';
+        ctx.beginPath();
+        ctx.arc(x + cell/2, y + cell/2, cell/2 - 2, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Tie indicator (green line)
+        if (entry.ties > 0) {
+          ctx.strokeStyle = '#2ecc71';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x + cell - 2, y + 2);
+          ctx.lineTo(x + cell - 2, y + cell - 2);
+          ctx.stroke();
+        }
+
+        // Pair indicators
+        if (entry.playerPair) {
+          ctx.fillStyle = '#4fc3f7';
+          ctx.beginPath();
+          ctx.arc(x + 3, y + cell - 3, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (entry.bankerPair) {
+          ctx.fillStyle = '#e74c3c';
+          ctx.beginPath();
+          ctx.arc(x + cell - 3, y + 3, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      row++;
+    }
+    drawCol++;
+  }
+}
+
+function renderBeadPlate() {
+  const t = getTable();
+  const canvas = document.getElementById('beadCanvas');
+  const ctx = canvas.getContext('2d');
+  const cell = getCellSize();
+
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = cell * ROAD_ROWS + 2;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Grid
+  const visibleCols = Math.floor(canvas.width / cell);
+  ctx.strokeStyle = 'rgba(212,175,55,0.1)';
+  ctx.lineWidth = 0.5;
+  for (let r = 0; r <= ROAD_ROWS; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * cell); ctx.lineTo(canvas.width, r * cell); ctx.stroke();
+  }
+  for (let c = 0; c <= visibleCols; c++) {
+    ctx.beginPath(); ctx.moveTo(c * cell, 0); ctx.lineTo(c * cell, ROAD_ROWS * cell); ctx.stroke();
+  }
+
+  const history = t.history || [];
+  const totalCols = Math.ceil(history.length / ROAD_ROWS);
+  const scrollOffset = Math.max(0, totalCols - visibleCols);
+
+  for (let i = 0; i < history.length; i++) {
+    const col = Math.floor(i / ROAD_ROWS) - scrollOffset;
+    const row = i % ROAD_ROWS;
+    const x = col * cell;
+    const y = row * cell;
+
+    if (x < -cell || x >= canvas.width) continue;
+
+    const r = history[i];
+    const color = r.winner === 'banker' ? '#e74c3c' : r.winner === 'player' ? '#4fc3f7' : '#2ecc71';
+
+    ctx.beginPath();
+    ctx.arc(x + cell/2, y + cell/2, cell/2 - 2, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Pair indicators
+    if (r.playerPair) {
+      ctx.fillStyle = '#4fc3f7';
+      ctx.beginPath();
+      ctx.arc(x + 3, y + cell - 3, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (r.bankerPair) {
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.arc(x + cell - 3, y + 3, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function renderDerivedRoad(canvasId, skipCols, style) {
+  const t = getTable();
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const cell = getCellSize();
+  const rows = ROAD_ROWS;
+
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = cell * rows + 2;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Grid
+  const visibleCols = Math.floor(canvas.width / cell);
+  ctx.strokeStyle = 'rgba(212,175,55,0.1)';
+  ctx.lineWidth = 0.5;
+  for (let r = 0; r <= rows; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * cell); ctx.lineTo(canvas.width, r * cell); ctx.stroke();
+  }
+  for (let c = 0; c <= visibleCols; c++) {
+    ctx.beginPath(); ctx.moveTo(c * cell, 0); ctx.lineTo(c * cell, rows * cell); ctx.stroke();
+  }
+
+  if (!t.bigRoad || t.bigRoad.length <= skipCols) return;
+
+  const data = getDerivedRoadData(t.bigRoad, skipCols);
+  const totalEntries = data.length;
+  const totalCols = Math.ceil(totalEntries / rows);
+  const scrollOffset = Math.max(0, totalCols - visibleCols);
+
+  for (let i = 0; i < data.length; i++) {
+    const col = Math.floor(i / rows) - scrollOffset;
+    const row = i % rows;
+    const x = col * cell;
+    const y = row * cell;
+
+    if (x < -cell || x >= canvas.width) continue;
+
+    const isRed = data[i];
+    const color = isRed ? '#e74c3c' : '#4fc3f7';
+
+    if (style === 'hollow') {
+      // Big Eye Boy: hollow circles
+      ctx.beginPath();
+      ctx.arc(x + cell/2, y + cell/2, cell/2 - 3, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (style === 'solid') {
+      // Small Road: solid circles
+      ctx.beginPath();
+      ctx.arc(x + cell/2, y + cell/2, cell/2 - 3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    } else if (style === 'slash') {
+      // Cockroach Pig: slashes
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 3, y + cell - 3);
+      ctx.lineTo(x + cell - 3, y + 3);
+      ctx.stroke();
+    }
+  }
+}
+
+function renderAllRoads() {
+  renderBigRoad();
+  renderBeadPlate();
+  renderDerivedRoad('bigEyeCanvas', 1, 'hollow');
+  renderDerivedRoad('smallRoadCanvas', 2, 'solid');
+  renderDerivedRoad('cockroachCanvas', 3, 'slash');
+}
+
+// ============ STATS ============
+function renderStats() {
+  const t = getTable();
+  const s = t.stats;
+  const pnl = t.balance - INITIAL_BALANCE;
+  const grid = document.getElementById('statsGrid');
+
+  grid.innerHTML = `
+    <div class="stat-item"><span class="stat-label">总局数</span><span class="stat-value">${s.totalRounds}</span></div>
+    <div class="stat-item"><span class="stat-label">庄赢</span><span class="stat-value">${s.bankerWins} (${s.totalRounds?((s.bankerWins/s.totalRounds)*100).toFixed(1):0}%)</span></div>
+    <div class="stat-item"><span class="stat-label">闲赢</span><span class="stat-value">${s.playerWins} (${s.totalRounds?((s.playerWins/s.totalRounds)*100).toFixed(1):0}%)</span></div>
+    <div class="stat-item"><span class="stat-label">和局</span><span class="stat-value">${s.tieWins} (${s.totalRounds?((s.tieWins/s.totalRounds)*100).toFixed(1):0}%)</span></div>
+    <div class="stat-item"><span class="stat-label">庄连胜最长</span><span class="stat-value">${s.maxBankerStreak}</span></div>
+    <div class="stat-item"><span class="stat-label">闲连胜最长</span><span class="stat-value">${s.maxPlayerStreak}</span></div>
+    <div class="stat-item"><span class="stat-label">当前连胜</span><span class="stat-value">${s.lastWinner ? (s.lastWinner==='player'?'闲':'庄')+'×'+s.currentStreak : '-'}</span></div>
+    <div class="stat-item"><span class="stat-label">庄对</span><span class="stat-value">${s.bankerPairs}</span></div>
+    <div class="stat-item"><span class="stat-label">闲对</span><span class="stat-value">${s.playerPairs}</span></div>
+    <div class="stat-item"><span class="stat-label">盈亏</span><span class="stat-value ${pnl>=0?'pos':'neg'}">${pnl>=0?'+':''}¥${pnl.toLocaleString()}</span></div>
+    <div class="stat-item"><span class="stat-label">最大盈利</span><span class="stat-value pos">+¥${s.maxProfit.toLocaleString()}</span></div>
+    <div class="stat-item"><span class="stat-label">最大亏损</span><span class="stat-value neg">${s.maxLoss < 0 ? '-¥'+Math.abs(s.maxLoss).toLocaleString() : '¥0'}</span></div>
+  `;
+}
+
+// ============ MULTI-TABLE ============
+function createTable(idx) {
+  return {
+    id: idx,
+    balance: INITIAL_BALANCE,
+    shoe: createShoe(),
+    history: [],
+    bigRoad: [],
+    stats: {
+      totalRounds:0,playerWins:0,bankerWins:0,tieWins:0,
+      playerPairs:0,bankerPairs:0,
+      maxPlayerStreak:0,maxBankerStreak:0,currentStreak:0,lastWinner:null,
+      maxProfit:0,maxLoss:0
+    }
+  };
+}
+
+function initTables() {
+  const saved = localStorage.getItem('baccarat_tables');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      tables = data.tables;
+      currentTableIdx = data.currentTableIdx || 0;
+      // Rebuild shoes if needed
+      tables.forEach(t => {
+        if (!t.shoe || t.shoe.length < 6) t.shoe = createShoe();
+        if (!t.bigRoad) {
+          t.bigRoad = [];
+          buildBigRoad(t);
+        }
+      });
+    } catch(e) {
+      tables = [createTable(0), createTable(1), createTable(2)];
+    }
+  } else {
+    tables = [createTable(0), createTable(1), createTable(2)];
+  }
+  renderTableTabs();
+}
+
+function renderTableTabs() {
+  const el = document.getElementById('tableTabs');
+  el.innerHTML = '';
+  for (let i = 0; i < MAX_TABLES; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = '桌 ' + (i + 1);
+    btn.className = i === currentTableIdx ? 'active' : '';
+    btn.onclick = () => switchTable(i);
+    el.appendChild(btn);
+  }
+}
+
+function switchTable(idx) {
+  saveState();
+  currentTableIdx = idx;
+  currentBets = {player:0,banker:0,tie:0,playerPair:0,bankerPair:0};
+  lastBets = null;
+  gamePhase = 'betting';
+  renderTableTabs();
+  updateBalance();
+  updateBetDisplay();
+  clearCards();
+  renderAllRoads();
+  renderStats();
+}
+
+// ============ PERSISTENCE ============
+function saveState() {
+  const data = {
+    tables: tables.map(t => ({...t, shoe: t.shoe.slice(-20)})), // save last 20 cards to save space
+    currentTableIdx
+  };
+  try {
+    localStorage.setItem('baccarat_tables', JSON.stringify(data));
+  } catch(e) {
+    // Storage full - trim history
+    tables.forEach(t => {
+      if (t.history.length > 100) t.history = t.history.slice(-100);
+    });
+    try {
+      localStorage.setItem('baccarat_tables', JSON.stringify(data));
+    } catch(e2) {}
+  }
+}
+
+// ============ RESET ============
+function showResetDialog() {
+  document.getElementById('resetDialog').classList.add('show');
+}
+
+function hideResetDialog() {
+  document.getElementById('resetDialog').classList.remove('show');
+}
+
+function resetTable() {
+  tables[currentTableIdx] = createTable(currentTableIdx);
+  currentBets = {player:0,banker:0,tie:0,playerPair:0,bankerPair:0};
+  lastBets = null;
+  gamePhase = 'betting';
+  updateBalance();
+  updateBetDisplay();
+  clearCards();
+  renderAllRoads();
+  renderStats();
+  saveState();
+  hideResetDialog();
+}
+
+function resetAll() {
+  tables = [createTable(0), createTable(1), createTable(2)];
+  currentTableIdx = 0;
+  currentBets = {player:0,banker:0,tie:0,playerPair:0,bankerPair:0};
+  lastBets = null;
+  gamePhase = 'betting';
+  renderTableTabs();
+  updateBalance();
+  updateBetDisplay();
+  clearCards();
+  renderAllRoads();
+  renderStats();
+  saveState();
+  hideResetDialog();
+}
+
+// ============ MOBILE TABS ============
+function switchMobileTab(tab, btn) {
+  document.querySelectorAll('.mobile-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const left = document.getElementById('leftPanel');
+  const right = document.getElementById('rightPanel');
+  const stats = document.getElementById('statsPanel');
+
+  if (tab === 'game') {
+    left.classList.remove('hidden');
+    right.classList.add('hidden');
+    stats.classList.add('mobile-hidden');
+  } else if (tab === 'roads') {
+    left.classList.add('hidden');
+    right.classList.remove('hidden');
+    stats.classList.add('mobile-hidden');
+    setTimeout(renderAllRoads, 50); // re-render after layout
+  } else if (tab === 'stats') {
+    left.classList.remove('hidden');
+    right.classList.add('hidden');
+    stats.classList.remove('mobile-hidden');
+    // Hide cards and betting for stats view on mobile
+  }
+}
+
+// ============ KEYBOARD SHORTCUTS ============
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  const key = e.key.toLowerCase();
+
+  // Chip selection: 1-5
+  if (key >= '1' && key <= '5') {
+    const chips = document.querySelectorAll('.chip');
+    const idx = parseInt(key) - 1;
+    if (chips[idx]) selectChip(chips[idx]);
+    return;
+  }
+
+  // Betting: P T B
+  if (gamePhase === 'betting') {
+    if (key === 'p') placeBet('player');
+    else if (key === 't') placeBet('tie');
+    else if (key === 'b') placeBet('banker');
+    else if (key === ' ') { e.preventDefault(); deal(); }
+  }
+});
+
+// ============ RIGHT-CLICK TO UNDO BET ============
+document.querySelectorAll('.bet-zone').forEach(zone => {
+  zone.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (gamePhase !== 'betting') return;
+    const betType = zone.dataset.bet;
+    if (currentBets[betType] >= selectedChip) {
+      currentBets[betType] -= selectedChip;
+      getTable().balance += selectedChip;
+      updateBetDisplay();
+      updateBalance();
+    }
+  });
+});
+
+// ============ WINDOW RESIZE ============
+window.addEventListener('resize', () => {
+  renderAllRoads();
+});
+
+// ============ SAVE ON UNLOAD ============
+window.addEventListener('beforeunload', () => {
+  saveState();
+});
+
+// ============ SERVICE WORKER ============
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ============ INIT ============
+initTables();
+updateBalance();
+updateBetDisplay();
+clearCards();
+renderAllRoads();
+renderStats();
+
+// Mobile: hide right panel initially
+if (window.innerWidth <= 768) {
+  document.getElementById('rightPanel').classList.add('hidden');
+}
+</script>
+</body>
+</html>
